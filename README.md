@@ -206,8 +206,8 @@ Use the [jsonstat-suite](https://www.npmjs.com/package/jsonstat-suite) module.
 
 ```js
 const
-  utils = require("jsonstat-suite"),
-  csvString = utils.toCSV( jsonstatObject, { rich: true } ),
-  newJsonstatObject = utils.fromCSV( csvString )
+  JSONstatUtils = require("jsonstat-suite"),
+  csvString = JSONstatUtils.toCSV( jsonstatObject, { rich: true } ),
+  newJsonstatObject = JSONstatUtils.fromCSV( csvString )
 ;
 ```
