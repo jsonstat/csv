@@ -26,6 +26,7 @@ JSON-stat can be converted to CSV-stat and CSV-stat can be converted back to JSO
   * [Command Line](#command-line)
   * [Client JavaScript](#client-javascript)
   * [Node.js](#nodejs)
+* [Importing CSV-stat into Excel](#importing-csv-stat-into-excel)
 
 ***
 
@@ -155,9 +156,11 @@ Data records order is not relevant. While in a regular CSV, category order must 
 
 ## Conversion Tools
 
+You can convert between JSON-stat and CSV-stat with the classic [`jsonstat-conv`](https://github.com/jsonstat/conv) CLI and [`jsonstat-suite`](https://www.npmjs.com/package/jsonstat-suite) library, or with the newer, dependency-free [`jsonstat-io`](https://www.npmjs.com/package/jsonstat-io) package ([repo](https://github.com/jsonstat/io)), which works on the command line and in Node and the browser.
+
 ### Command Line
 
-You can use the [JSON-stat Command Line Conversion Tools](https://github.com/jsonstat/conv) to convert to and from CSV-stat.
+Use the [JSON-stat Command Line Conversion Tools](https://github.com/jsonstat/conv) (`jsonstat-conv`) to convert to and from CSV-stat.
 
 To convert to CSV-stat from JSON-stat, use [jsonstat2csv](https://github.com/jsonstat/conv#jsonstat2csv):
 
@@ -169,6 +172,16 @@ To convert to JSON-stat from CSV-stat, use [csv2jsonstat](https://github.com/jso
 
 ```
 csv2jsonstat oecd.jsv oecd.json
+```
+
+Alternatively, use the [jsonstat-io](https://github.com/jsonstat/io) CLI:
+
+```
+# JSON-stat → CSV-stat
+npx jsonstat-io ./oecd.jsonstat.json --to jsv -o oecd.jsv
+
+# CSV-stat → JSON-stat (format auto-detected from the .jsv extension)
+npx jsonstat-io ./oecd.jsv
 ```
 
 ### Client JavaScript
@@ -200,6 +213,19 @@ fetch( "https://json-stat.org/samples/galicia.jsv" ).then(function(resp) {
 });
 ```
 
+Alternatively, the [`jsonstat-io`](https://www.npmjs.com/package/jsonstat-io) package works in the browser as an ES module:
+
+```js
+import { exportDataset, importToDataset } from "jsonstat-io";
+
+// JSON-stat → CSV-stat
+const jsv = await exportDataset(jsonstatObject, { to: "jsv" });
+
+// CSV-stat → JSON-stat
+const jsvString = await (await fetch("https://json-stat.org/samples/galicia.jsv")).text();
+const dataset = await importToDataset(jsvString, { from: "jsv" });
+```
+
 ### Node.js
 
 Use the [jsonstat-suite](https://www.npmjs.com/package/jsonstat-suite) module.
@@ -211,3 +237,89 @@ const
   newJsonstatObject = JSONstatUtils.fromCSV( csvString )
 ;
 ```
+
+Alternatively, use the [`jsonstat-io`](https://www.npmjs.com/package/jsonstat-io) package (ES module):
+
+```js
+import { readFile } from "node:fs/promises";
+import { exportDataset, importToDataset } from "jsonstat-io";
+
+// JSON-stat → CSV-stat
+const jsv = await exportDataset(jsonstatObject, { to: "jsv" });
+
+// CSV-stat → JSON-stat
+const dataset = await importToDataset(
+  await readFile("./oecd.jsv", "utf8"),
+  { from: "jsv" }
+);
+```
+
+> For lower-level control, the `jsonstat-io/jsv` subpath exposes `csvstatToCube` (parse) and `cubeToCsvstat` (serialize) — see the [jsonstat-io repo](https://github.com/jsonstat/io).
+
+## Importing CSV-stat into Excel
+
+The [`pq/`](pq) folder contains a set of Power Query (M) queries that read a CSV-stat (`.jsv`) file and expose **all** of its information across several related sheets in Excel (Excel for Windows and Mac). Only the built-in Power Query editor is used — no add-ins are required.
+
+### Files
+
+| File | Role | Load it to a sheet? |
+|------|------|:-------------------:|
+| [`pq/FilePath.pq`](pq/FilePath.pq) | **Parameter** — the absolute path to the `.jsv` file. | Connection only |
+| [`pq/CSVStat.pq`](pq/CSVStat.pq) | **Parser** — reads the file, returns a record of 5 tables. | Connection only |
+| [`pq/CSVStat_Dataset.pq`](pq/CSVStat_Dataset.pq) | Sheet: dataset properties (label, source, updated, href, separators). | ✅ |
+| [`pq/CSVStat_Dimensions.pq`](pq/CSVStat_Dimensions.pq) | Sheet: one row per dimension (id, label, size, role, order). | ✅ |
+| [`pq/CSVStat_Categories.pq`](pq/CSVStat_Categories.pq) | Sheet: one row per category (dimension, id, label, order). | ✅ |
+| [`pq/CSVStat_Units.pq`](pq/CSVStat_Units.pq) | Sheet: unit info for metric categories (decimals, label, symbol, position). | ✅ |
+| [`pq/CSVStat_Data.pq`](pq/CSVStat_Data.pq) | Sheet: the value table (CSV body). `value` is a nullable number. | ✅ |
+| [`pq/CSVStat_DataLabeled.pq`](pq/CSVStat_DataLabeled.pq) | Sheet: the value table with dimension **labels** as headers, category **labels** as cell values, plus a decimals-aware `value (formatted)` and `unit` label column. | ✅ |
+
+### How the five sheets relate
+
+```
+                         ┌─────────────────────┐
+                         │      Dataset        │   single-value properties
+                         │ label/source/href…  │
+                         └─────────────────────┘
+
+   ┌──────────────┐  DimId   ┌──────────────────┐  DimId+CategoryId   ┌─────────┐
+   │  Dimensions  │◄────────│    Categories    │◄─────────────────────│  Units  │
+   │ id/size/role │  1 : N   │ cat id/label     │       1 : 1          │ metrics │
+   └──────────────┘         └──────────────────┘                      └─────────┘
+            ▲
+            │ category IDs match the Data columns
+            ▼
+   ┌──────────────────────────────────────────┐
+   │                 Data                     │
+   │ [dim columns…][, status] value(number)   │
+   └──────────────────────────────────────────┘
+```
+
+- **Dimensions** ↔ **Categories** via `DimId`.
+- **Categories** ↔ **Units** via `DimId` + `CategoryId` (only metric dimensions have units).
+- **Data** ↔ **Categories** via each dimension's category ID columns.
+
+### Install (Excel for Windows / Mac)
+
+1. Open Excel → **Data** tab → **Get Data** → **Launch Power Query Editor…**.
+2. In the editor → **Home** → **Manage Parameters** → **New Parameter**:
+   - Name: `FilePath`, Type: *Text*, **Current Value**: the **absolute** path to your `.jsv` file (e.g. `/path/to/galicia.jsv`).
+3. **Home** → **New Source** → **Blank Query**. Open **Advanced Editor** and paste the contents of [`pq/CSVStat.pq`](pq/CSVStat.pq). Name the query **`CSVStat`**. *Set its Enable Load = OFF (Connection only).*
+4. Repeat for each of the `pq/CSVStat_*.pq` files (one query each, keeping the file name as the query name). Leave **Enable Load = ON** for these.
+5. **Close & Load** → the sheets appear in the workbook.
+
+> Re-pointing at another file is just a matter of editing the `FilePath` parameter and refreshing.
+
+### What the parser handles
+
+| CSV-stat feature | Handled |
+|------------------|:-------:|
+| Custom column / decimal / unit separators (from the `jsonstat` line) | ✅ |
+| Quoted metadata fields with embedded commas (`source,"…,…"`) | ✅ |
+| `label` / `source` / `updated` / `href` (all optional) | ✅ |
+| `dimension` lines in any order — order is derived from the CSV header | ✅ |
+| Category ids + labels per dimension | ✅ |
+| Optional `role` (geo / time / metric) | ✅ |
+| Optional per-category **units** for metrics (`decimals\|label\|symbol\|position`) | ✅ |
+| Optional `status` column (passed through as text) | ✅ |
+| Missing values / non-numeric strings in the `value` column → `null` | ✅ |
+| Blank trailing lines stripped | ✅ |
