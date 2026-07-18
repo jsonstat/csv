@@ -9,7 +9,7 @@ JSON-stat can be converted to CSV-stat and CSV-stat can be converted back to JSO
 
 ***
 
-**Sample file**: https://json-stat.org/samples/galicia.jsv
+**Sample files**: [/samples](https://github.com/jsonstat/csv/tree/master/samples)
 
 ***
 
@@ -156,7 +156,7 @@ Data records order is not relevant. While in a regular CSV, category order must 
 
 ## Conversion Tools
 
-You can convert between JSON-stat and CSV-stat with the classic [`jsonstat-conv`](https://github.com/jsonstat/conv) CLI and [`jsonstat-suite`](https://www.npmjs.com/package/jsonstat-suite) library, or with the newer, dependency-free [`jsonstat-io`](https://www.npmjs.com/package/jsonstat-io) package ([repo](https://github.com/jsonstat/io)), which works on the command line and in Node and the browser.
+You can convert between JSON-stat and CSV-stat with the [`jsonstat-conv`](https://github.com/jsonstat/conv) CLI and [`jsonstat-suite`](https://github.com/jsonstat/suite) library, or with the dependency-free [`jsonstat-io`](https://github.com/jsonstat/io) package, which works on the command line and in Node and the browser.
 
 ### Command Line
 
@@ -178,10 +178,10 @@ Alternatively, use the [jsonstat-io](https://github.com/jsonstat/io) CLI:
 
 ```
 # JSON-stat → CSV-stat
-npx jsonstat-io ./oecd.jsonstat.json --to jsv -o oecd.jsv
+npx jsonstat-io oecd.json --to jsv -o oecd.jsv
 
 # CSV-stat → JSON-stat (format auto-detected from the .jsv extension)
-npx jsonstat-io ./oecd.jsv
+npx jsonstat-io oecd.jsv
 ```
 
 ### Client JavaScript
@@ -282,9 +282,9 @@ The [`pq/`](pq) folder contains a set of Power Query (M) queries that read a CSV
                          └─────────────────────┘
 
    ┌──────────────┐  DimId   ┌──────────────────┐  DimId+CategoryId   ┌─────────┐
-   │  Dimensions  │◄────────│    Categories    │◄─────────────────────│  Units  │
-   │ id/size/role │  1 : N   │ cat id/label     │       1 : 1          │ metrics │
-   └──────────────┘         └──────────────────┘                      └─────────┘
+   │  Dimensions  │◄─────────│    Categories    │◄────────────────────│  Units  │
+   │ id/size/role │  1 : N   │ cat id/label     │       1 : 1         │ metrics │
+   └──────────────┘          └──────────────────┘                     └─────────┘
             ▲
             │ category IDs match the Data columns
             ▼
