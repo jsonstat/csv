@@ -5,8 +5,8 @@ updated,2012-09-27
 href,https://json-stat.org/samples/canada.json
 dimension,country,country,1,CA,Canada,geo
 dimension,year,year,1,2012,2012,time
-dimension,age,age group,20,T,total,4,0 to 4,9,5 to 9,14,10 to 14,19,15 to 19,24,20 to 24,29,25 to 29,34,30 to 34,39,35 to 39,44,40 to 44,49,45 to 49,54,50 to 54,59,55 to 59,64,60 to 64,69,65 to 69,74,[...]
-dimension,concept,concepts,2,POP,population,PERCENT,weight of age group in the population,metric,1|thousands of persons,1||%
+dimension,age,age group,20,T,total,4,0 to 4,9,5 to 9,14,10 to 14,19,15 to 19,24,20 to 24,29,25 to 29,34,30 to 34,39,35 to 39,44,40 to 44,49,45 to 49,54,50 to 54,59,55 to 59,64,60 to 64,69,65 to 69,74,70 to 74,79,75 to 79,84,80 to 84,89,85 to 89,older,90 and older
+dimension,concept,concepts,2,POP,population,PERCENT,weight of age group in the population,metric,1|thousands of persons,1||%|
 dimension,sex,sex,3,T,total,M,male,F,female
 data
 country,year,age,concept,sex,status,value
